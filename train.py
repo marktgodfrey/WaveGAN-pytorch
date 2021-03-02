@@ -2,9 +2,7 @@ import torch
 from torch import autograd
 from torch import optim
 import json
-from utils import save_samples
-import numpy as np
-import pprint
+from tensorboardX import SummaryWriter
 import pickle
 import datetime
 from wavegan import *
@@ -38,6 +36,8 @@ lmbda = args['lmbda']
 # Dir
 audio_dir = args['audio_dir']
 output_dir = args['output_dir']
+
+TB_LOGGER = SummaryWriter(os.path.join(output_dir, 'logs'))
 
 # =============Network===============
 netG = WaveGANGenerator(model_size=model_size, ngpus=ngpus, latent_dim=latent_dim, upsample=True)
@@ -235,6 +235,11 @@ for epoch in range(1, epochs+1):
                                        D_cost_valid_epoch_avg,
                                        D_wass_valid_epoch_avg,
                                        G_cost_epoch_avg))
+    TB_LOGGER.add_scalar('D_cost_train', D_cost_train_epoch_avg, epoch)
+    TB_LOGGER.add_scalar('D_wass_train', D_wass_train_epoch_avg, epoch)
+    TB_LOGGER.add_scalar('D_cost_valid', D_cost_valid_epoch_avg, epoch)
+    TB_LOGGER.add_scalar('D_wass_valid', D_wass_valid_epoch_avg, epoch)
+    TB_LOGGER.add_scalar('G_cost_epoch', G_cost_epoch_avg, epoch)
 
     # Generate audio samples.
     if epoch % epochs_per_sample == 0:
