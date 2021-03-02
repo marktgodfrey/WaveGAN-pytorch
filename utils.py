@@ -38,7 +38,7 @@ def time_since(since):
     return '%dm %ds' % (m, s)
 
 
-def save_samples(epoch_samples, epoch, output_dir, fs=16000):
+def save_samples(epoch_samples, epoch, output_dir, fs=8000):
     """
     Save output samples.
     """
@@ -51,7 +51,7 @@ def save_samples(epoch_samples, epoch, output_dir, fs=16000):
 
 
 # Adapted from @jtcramer https://github.com/jtcramer/wavegan/blob/master/sample.py.
-def sample_generator(filepath, window_length=16384, fs=16000):
+def sample_generator(filepath, window_length=65536, fs=8000):
     """
     Audio sample generator
     """

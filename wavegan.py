@@ -34,17 +34,20 @@ class WaveGANGenerator(nn.Module):
         self.post_proc_filt_len = post_proc_filt_len
         self.verbose = verbose
         # "Dense" is the same meaning as fully connection.
-        self.fc1 = nn.Linear(latent_dim, 256 * model_size)
+        self.dim_mul = 32
+        self.fc1 = nn.Linear(latent_dim, 512 * model_size)
 
         stride = 4
         if upsample:
             stride = 1
             upsample = 4
-        self.deconv_1 = Transpose1dLayer(16 * model_size, 8 * model_size, 25, stride, upsample=upsample)
-        self.deconv_2 = Transpose1dLayer(8 * model_size, 4 * model_size, 25, stride, upsample=upsample)
-        self.deconv_3 = Transpose1dLayer(4 * model_size, 2 * model_size, 25, stride, upsample=upsample)
-        self.deconv_4 = Transpose1dLayer(2 * model_size, model_size, 25, stride, upsample=upsample)
-        self.deconv_5 = Transpose1dLayer(model_size, num_channels, 25, stride, upsample=upsample)
+
+        self.deconv_1 = Transpose1dLayer(self.dim_mul * model_size,(self.dim_mul * model_size) // 2, 25, stride, upsample=upsample)
+        self.deconv_2 = Transpose1dLayer((self.dim_mul * model_size) // 2, (self.dim_mul * model_size) // 4, 25, stride, upsample=upsample)
+        self.deconv_3 = Transpose1dLayer((self.dim_mul * model_size) // 4, (self.dim_mul * model_size) // 8, 25, stride, upsample=upsample)
+        self.deconv_4 = Transpose1dLayer((self.dim_mul * model_size) // 8, (self.dim_mul * model_size) // 16, 25, stride, upsample=upsample)
+        self.deconv_5 = Transpose1dLayer((self.dim_mul * model_size) // 16, model_size, 25, stride, upsample=upsample)
+        self.deconv_6 = Transpose1dLayer(model_size, num_channels, 25, stride, upsample=upsample)
 
         if post_proc_filt_len:
             self.ppfilter1 = nn.Conv1d(num_channels, num_channels, post_proc_filt_len)
@@ -54,7 +57,7 @@ class WaveGANGenerator(nn.Module):
                 nn.init.kaiming_normal(m.weight.data)
 
     def forward(self, x):
-        x = self.fc1(x).view(-1, 16 * self.model_size, 16)
+        x = self.fc1(x).view(-1, 32 * self.model_size, 16)
         x = F.relu(x)
         if self.verbose:
             print(x.shape)
@@ -75,7 +78,11 @@ class WaveGANGenerator(nn.Module):
         if self.verbose:
             print(x.shape)
 
-        output = F.tanh(self.deconv_5(x))
+        x = F.relu(self.deconv_5(x))
+        if self.verbose:
+            print(x.shape)
+
+        output = F.tanh(self.deconv_6(x))
         return output
 
 
@@ -145,13 +152,15 @@ class WaveGANDiscriminator(nn.Module):
         self.conv3 = nn.Conv1d(2 * model_size, 4 * model_size, 25, stride=4, padding=11)
         self.conv4 = nn.Conv1d(4 * model_size, 8 * model_size, 25, stride=4, padding=11)
         self.conv5 = nn.Conv1d(8 * model_size, 16 * model_size, 25, stride=4, padding=11)
+        self.conv6 = nn.Conv1d(16 * model_size, 32 * model_size, 25, stride=4, padding=11)
 
         self.ps1 = PhaseShuffle(shift_factor)
         self.ps2 = PhaseShuffle(shift_factor)
         self.ps3 = PhaseShuffle(shift_factor)
         self.ps4 = PhaseShuffle(shift_factor)
+        self.ps5 = PhaseShuffle(shift_factor)
 
-        self.fc1 = nn.Linear(256 * model_size, 1)
+        self.fc1 = nn.Linear(512 * model_size, 1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
@@ -181,8 +190,13 @@ class WaveGANDiscriminator(nn.Module):
         x = F.leaky_relu(self.conv5(x), negative_slope=self.alpha)
         if self.verbose:
             print(x.shape)
+        x = self.ps5(x)
 
-        x = x.view(-1, 256 * self.model_size)
+        x = F.leaky_relu(self.conv6(x), negative_slope=self.alpha)
+        if self.verbose:
+            print(x.shape)
+
+        x = x.view(-1, 512 * self.model_size)
         if self.verbose:
             print(x.shape)
 
