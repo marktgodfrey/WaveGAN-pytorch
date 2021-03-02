@@ -117,7 +117,7 @@ def split_data(audio_path_list, valid_ratio, test_ratio, batch_size):
     num_test = int(np.ceil(num_files * test_ratio))
     num_train = num_files - num_valid - num_test
 
-    if not (num_valid > 0 and num_test > 0 and num_train > 0):
+    if not (num_valid > 0 and num_train > 0):
         LOGGER.error("Please download DATASET '{}' and put it under current path !".format(DATASET_NAME))
 
     # Random shuffle the audio_path_list for splitting.
@@ -130,7 +130,7 @@ def split_data(audio_path_list, valid_ratio, test_ratio, batch_size):
 
     train_data = batch_generator(train_files, batch_size)
     valid_data = batch_generator(valid_files, batch_size)
-    test_data = batch_generator(test_files, batch_size)
+    test_data = batch_generator(test_files, batch_size) if test_files else None
 
     return train_data, valid_data, test_data, train_size
 
