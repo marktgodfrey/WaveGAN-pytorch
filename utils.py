@@ -4,7 +4,7 @@ import math
 import torch
 import random
 import logging
-import librosa
+from scipy.io import wavfile
 import argparse
 import pescador
 import numpy as np
@@ -47,7 +47,7 @@ def save_samples(epoch_samples, epoch, output_dir, fs=8000):
     for idx, sample in enumerate(epoch_samples):
         output_path = os.path.join(sample_dir, "{}.wav".format(idx+1))
         sample = sample[0]
-        librosa.output.write_wav(output_path, sample, fs)
+        wavfile.write(output_path, fs, sample)
 
 
 # Adapted from @jtcramer https://github.com/jtcramer/wavegan/blob/master/sample.py.
@@ -56,7 +56,10 @@ def sample_generator(filepath, window_length=65536, fs=8000):
     Audio sample generator
     """
     try:
-        audio_data, _ = librosa.load(filepath, sr=fs)
+        sr_x, audio_data = wavfile.read(filepath)
+        if sr_x != fs:
+            LOGGER.error("wrong sampling rate! expecting {}, got {}".format(fs, sr_x))
+            raise StopIteration
 
         # Clip magnitude
         max_mag = np.max(np.abs(audio_data))
