@@ -237,7 +237,7 @@ def parse_arguments():
                         help='Size of latent dimension used by generator')
     parser.add_argument('-eps', '--epochs-per-sample', dest='epochs_per_sample', type=int, default=SAMPLE_EVERY,
                         help='How many epochs between every set of samples generated for inspection')
-    parser.add_argument('-eps', '--epochs-per-backup', dest='epochs_per_backup', type=int, default=BACKUP_EVERY,
+    parser.add_argument('-epb', '--epochs-per-backup', dest='epochs_per_backup', type=int, default=BACKUP_EVERY,
                         help='How many epochs between every backup')
     parser.add_argument('-ss', '--sample-size', dest='sample_size', type=int, default=SAMPLE_NUM,
                         help='Number of inspection samples generated')
