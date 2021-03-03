@@ -3,7 +3,6 @@ from torch import autograd
 from torch import optim
 import json
 from tensorboardX import SummaryWriter
-import pickle
 import datetime
 from wavegan import *
 from utils import *
@@ -81,12 +80,6 @@ valid_iter = iter(valid_data)
 
 
 # =============Train===============
-history = []
-D_costs_train = []
-D_wasses_train = []
-D_costs_valid = []
-D_wasses_valid = []
-G_costs = []
 
 start = time.time()
 LOGGER.info('Starting training...EPOCHS={}, BATCH_SIZE={}, BATCH_NUM={}'.format(epochs, batch_size, BATCH_NUM))
@@ -224,12 +217,6 @@ for epoch in range(1, epochs+1):
     D_cost_valid_epoch_avg = sum(D_cost_valid_epoch) / float(len(D_cost_valid_epoch))
     D_wass_valid_epoch_avg = sum(D_wass_valid_epoch) / float(len(D_wass_valid_epoch))
     G_cost_epoch_avg = sum(G_cost_epoch) / float(len(G_cost_epoch))
-
-    D_costs_train.append(D_cost_train_epoch_avg)
-    D_wasses_train.append(D_wass_train_epoch_avg)
-    D_costs_valid.append(D_cost_valid_epoch_avg)
-    D_wasses_valid.append(D_wass_valid_epoch_avg)
-    G_costs.append(G_cost_epoch_avg)
 
     LOGGER.info("{} D_cost_train:{:.4f} | D_wass_train:{:.4f} | D_cost_valid:{:.4f} | D_wass_valid:{:.4f} | "
                 "G_cost:{:.4f}".format(time_since(start),
