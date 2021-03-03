@@ -56,15 +56,27 @@ def sample_generator(filepath, window_length=65536, fs=8000):
     Audio sample generator
     """
     try:
-        sr_x, audio_data = wavfile.read(filepath)
+        sr_x, x = wavfile.read(filepath)
         if sr_x != fs:
             LOGGER.error("wrong sampling rate! expecting {}, got {}".format(fs, sr_x))
             raise StopIteration
 
+        if x.dtype is np.int32:
+            x = x / 2147483648.
+        elif x.dtype is np.int16:
+            x = x / 32768.
+        else:
+            LOGGER.info("unknown wave data type: {}".format(x.dtype))
+
+        if x.ndim > 1:
+            x = x.mean(1)
+
         # Clip magnitude
-        max_mag = np.max(np.abs(audio_data))
+        max_mag = np.max(np.abs(x))
         if max_mag > 1:
-            audio_data /= max_mag
+            audio_data = x / max_mag
+        else:
+            audio_data = x
     except Exception as e:
         LOGGER.error("Could not load {}: {}".format(filepath, str(e)))
         raise StopIteration
