@@ -61,9 +61,9 @@ def sample_generator(filepath, window_length=65536, fs=8000):
             LOGGER.error("wrong sampling rate! expecting {}, got {}".format(fs, sr_x))
             raise StopIteration
 
-        if x.dtype is np.int32:
+        if x.dtype == np.int32:
             x = x / 2147483648.
-        elif x.dtype is np.int16:
+        elif x.dtype == np.int16:
             x = x / 32768.
         else:
             LOGGER.info("unknown wave data type: {}".format(x.dtype))
