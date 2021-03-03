@@ -30,6 +30,8 @@ model_dir = make_path(os.path.join(args['output_dir'],
 args['model_dir'] = model_dir
 # save samples for every N epochs.
 epochs_per_sample = args['epochs_per_sample']
+# save model for every N epochs.
+epochs_per_backup = args['epochs_per_backup']
 # gradient penalty regularization factor.
 lmbda = args['lmbda']
 
@@ -62,6 +64,7 @@ LOGGER.info('Saving configurations...')
 config_path = os.path.join(model_dir, 'config.json')
 with open(config_path, 'w') as f:
     json.dump(args, f)
+model_path = os.path.join(model_dir, 'wavegan.pt')
 
 # Load data.
 LOGGER.info('Loading audio data...')
@@ -250,22 +253,42 @@ for epoch in range(1, epochs+1):
         sample_out = sample_out.data.numpy()
         save_samples(sample_out, epoch, output_dir)
 
+    if epoch % epochs_per_backup == 0:
+        LOGGER.info("Saving models...")
+        saving_dict = {
+            "generator": netG.state_dict(),
+            "discriminator": netD.state_dict(),
+            "epoch": epoch,
+            "optimizer_d": optimizerD.state_dict(),
+            "optimizer_g": optimizerG.state_dict()
+        }
+        torch.save(saving_dict, model_path)
+
     # TODO
     # Early stopping by Inception Score(IS)
 
 LOGGER.info('>>>>>>>Training finished !<<<<<<<')
 
 # Save model
+# LOGGER.info("Saving models...")
+# netD_path = os.path.join(output_dir, "discriminator.pkl")
+# netG_path = os.path.join(output_dir, "generator.pkl")
+# torch.save(netD.state_dict(), netD_path, pickle_protocol=pickle.HIGHEST_PROTOCOL)
+# torch.save(netG.state_dict(), netG_path, pickle_protocol=pickle.HIGHEST_PROTOCOL)
 LOGGER.info("Saving models...")
-netD_path = os.path.join(output_dir, "discriminator.pkl")
-netG_path = os.path.join(output_dir, "generator.pkl")
-torch.save(netD.state_dict(), netD_path, pickle_protocol=pickle.HIGHEST_PROTOCOL)
-torch.save(netG.state_dict(), netG_path, pickle_protocol=pickle.HIGHEST_PROTOCOL)
+saving_dict = {
+    "generator": netG.state_dict(),
+    "discriminator": netD.state_dict(),
+    "epoch": epoch,
+    "optimizer_d": optimizerD.state_dict(),
+    "optimizer_g": optimizerG.state_dict()
+}
+torch.save(saving_dict, model_path)
 
-# Plot loss curve.
-LOGGER.info("Saving loss curve...")
-plot_loss(D_costs_train, D_wasses_train,
-          D_costs_valid, D_wasses_valid, G_costs, output_dir)
+# # Plot loss curve.
+# LOGGER.info("Saving loss curve...")
+# plot_loss(D_costs_train, D_wasses_train,
+#           D_costs_valid, D_wasses_valid, G_costs, output_dir)
 
 LOGGER.info("All finished!")
 
